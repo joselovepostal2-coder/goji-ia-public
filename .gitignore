@@ -1,0 +1,6 @@
+node_modules/
+.env
+.env.*
+!.env.example
+.goji-local.json
+.DS_Store
