@@ -1,17 +1,51 @@
 {
-  "name": "goji-ai-backend",
-  "version": "1.0.0",
+  "name": "goji-ai",
+  "version": "1.0.1",
   "private": true,
-  "description": "Backend seguro para GOJI AI de Goji Empires",
-  "main": "server.js",
+  "description": "GOJI AI desktop app for Windows",
+  "main": "electron-main.js",
   "scripts": {
     "start": "node server.js",
-    "start:local": "node local-server.js"
+    "start:local": "node local-server.js",
+    "start:desktop": "electron .",
+    "dist:win": "electron-builder --win portable"
   },
   "engines": {
     "node": ">=20"
   },
   "dependencies": {
     "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "electron": "^38.0.0",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "com.gojiempires.goji-ai",
+    "productName": "GOJI AI",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "index.html",
+      "local-server.js",
+      "electron-main.js",
+      "package.json"
+    ],
+    "asar": true,
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "GOJI-AI-${version}-Windows.${ext}"
+    },
+    "portable": {
+      "artifactName": "GOJI-AI-${version}-Windows-Portable.${ext}"
+    }
   }
 }
