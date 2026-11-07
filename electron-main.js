@@ -34,6 +34,35 @@ if (!app.requestSingleInstanceLock()) {
       }
     });
 
+    // Grant media permissions only to GOJI's own loopback page.
+    // The page still asks through an explicit user action before opening camera/microphone.
+    const isGojiOrigin = (origin) => {
+      try { return new URL(origin).origin === "http://127.0.0.1:3000"; }
+      catch { return false; }
+    };
+    session.defaultSession.setPermissionRequestHandler((webContents, permission, callback, details) => {
+      const origin = details?.requestingUrl || details?.securityOrigin || webContents.getURL();
+      if (!isGojiOrigin(origin)) { callback(false); return; }
+      if (permission === "media") {
+        const types = details?.mediaTypes || [];
+        callback(types.includes("audio") || types.includes("video"));
+        return;
+      }
+      if (permission === "display-capture") {
+        callback(true);
+        return;
+      }
+      callback(false);
+    });
+    session.defaultSession.setPermissionCheckHandler((webContents, permission, requestingOrigin, details) => {
+      if (!isGojiOrigin(requestingOrigin || webContents?.getURL())) return false;
+      if (permission === "media") {
+        const types = details?.mediaType ? [details.mediaType] : [];
+        return types.includes("audio") || types.includes("video");
+      }
+      return permission === "display-capture";
+    });
+
     // Electron requires an explicit handler for getDisplayMedia.
     // Show a native Windows dialog so the user chooses which monitor to share.
     session.defaultSession.setDisplayMediaRequestHandler(async (_request, callback) => {
