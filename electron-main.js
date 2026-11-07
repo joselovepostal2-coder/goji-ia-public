@@ -1,6 +1,6 @@
 "use strict";
 
-const { app, BrowserWindow, shell } = require("electron");
+const { app, BrowserWindow, shell, desktopCapturer, dialog, session } = require("electron");
 const path = require("path");
 
 if (!app.requestSingleInstanceLock()) {
@@ -31,6 +31,42 @@ if (!app.requestSingleInstanceLock()) {
         contextIsolation: true,
         nodeIntegration: false,
         sandbox: true
+      }
+    });
+
+    // Electron requires an explicit handler for getDisplayMedia.
+    // Show a native Windows dialog so the user chooses which monitor to share.
+    session.defaultSession.setDisplayMediaRequestHandler(async (_request, callback) => {
+      try {
+        const sources = await desktopCapturer.getSources({
+          types: ["screen"],
+          thumbnailSize: { width: 320, height: 180 }
+        });
+        if (!sources.length) {
+          callback({});
+          return;
+        }
+        const buttons = sources.slice(0, 4).map((source, index) =>
+          sources.length === 1 ? "Compartir pantalla" : "Pantalla " + (index + 1)
+        );
+        buttons.push("Cancelar");
+        const choice = await dialog.showMessageBox(win, {
+          type: "question",
+          title: "GOJI AI · Transmisor",
+          message: "¿Qué pantalla quieres compartir?",
+          buttons,
+          cancelId: buttons.length - 1,
+          defaultId: 0,
+          noLink: true
+        });
+        if (choice.response < 0 || choice.response >= sources.length || choice.response >= 4) {
+          callback({});
+          return;
+        }
+        callback({ video: sources[choice.response] });
+      } catch (error) {
+        console.error("GOJI screen capture:", error);
+        callback({});
       }
     });
 
