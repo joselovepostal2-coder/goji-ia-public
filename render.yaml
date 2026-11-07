@@ -19,5 +19,7 @@ services:
         sync: false
       - key: DEEPSEEK_API_KEY
         sync: false
+      - key: ABACUS_API_KEY
+        sync: false
       - key: ALLOWED_ORIGIN
         sync: false
