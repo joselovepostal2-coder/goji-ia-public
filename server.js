@@ -2,6 +2,7 @@
 
 const express = require("express");
 const path = require("path");
+const fs = require("fs");
 
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
@@ -236,10 +237,11 @@ app.post("/api/chat", requireAccess, async (req, res) => {
 // La app estática se sirve desde public/ si existe; el index.html del repositorio
 // puede moverse a public/index.html para que Render lo publique automáticamente.
 const publicDir = path.join(__dirname, "public");
-app.use(express.static(publicDir));
+const frontendDir = fs.existsSync(path.join(publicDir, "index.html")) ? publicDir : __dirname;
+app.use(express.static(frontendDir));
 app.get("*", (_req, res) => {
-  res.sendFile(path.join(publicDir, "index.html"), err => {
-    if (err) res.status(404).send("GOJI AI: falta public/index.html");
+  res.sendFile(path.join(frontendDir, "index.html"), err => {
+    if (err) res.status(404).send("GOJI AI: falta index.html en la raíz o public/.");
   });
 });
 
