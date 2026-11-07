@@ -88,7 +88,10 @@ app.get("/api/abacus/models", async (_req, res) => {
         const explicitFree = item.free === true || item.is_free === true || pricing?.free === true || pricing?.is_free === true;
         const free = explicitFree || (prices.length > 0 && prices.every(price => price === 0));
         const hasPrice = prices.some(price => price > 0);
-        return { id: item.id, owned_by: item.owned_by || item.provider || "", model_type: item.model_type || "text", api_formats: item.api_formats || [], pricing, pricing_status: free ? "free" : hasPrice ? "paid" : "unknown", free };
+        // RouteLLM's official documentation states that routing calls consume credits.
+        // If its model entry omits the rate fields, never present it as free.
+        const paid = hasPrice || (item.id === "route-llm" && !free);
+        return { id: item.id, owned_by: item.owned_by || item.provider || "", model_type: item.model_type || "text", api_formats: item.api_formats || [], pricing, pricing_status: free ? "free" : paid ? "paid" : "unknown", free };
       })
       .slice(0, 500);
     res.json({ models });
