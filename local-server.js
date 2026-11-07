@@ -73,7 +73,23 @@ app.get("/api/abacus/models", async (_req, res) => {
     const data = await providerJson(response);
     const models = (Array.isArray(data.data) ? data.data : Array.isArray(data.models) ? data.models : [])
       .filter(item => item && typeof item.id === "string")
-      .map(item => ({ id: item.id, owned_by: item.owned_by || "", model_type: item.model_type || "text", api_formats: item.api_formats || [] }))
+      .map(item => {
+        const pricing = item.pricing || item.pricing_info || item.prices || item.cost || null;
+        const prices = [];
+        const scanPrices = (value, key = "") => {
+          if (value && typeof value === "object") {
+            for (const [k, v] of Object.entries(value)) scanPrices(v, k);
+          } else if (/(price|cost|input|output|prompt|completion)/i.test(key) && value !== null && value !== undefined) {
+            const n = typeof value === "number" ? value : Number(String(value).replace(/[$,]/g, ""));
+            if (Number.isFinite(n)) prices.push(n);
+          }
+        };
+        scanPrices(pricing);
+        const explicitFree = item.free === true || item.is_free === true || pricing?.free === true || pricing?.is_free === true;
+        const free = explicitFree || (prices.length > 0 && prices.every(price => price === 0));
+        const hasPrice = prices.some(price => price > 0);
+        return { id: item.id, owned_by: item.owned_by || item.provider || "", model_type: item.model_type || "text", api_formats: item.api_formats || [], pricing, pricing_status: free ? "free" : hasPrice ? "paid" : "unknown", free };
+      })
       .slice(0, 500);
     res.json({ models });
   } catch (error) { fail(res, error.status || 502, error.code || "models_error", error.message || "No se pudo consultar el catálogo de Abacus."); }
