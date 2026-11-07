@@ -5,7 +5,8 @@
   "description": "Backend seguro para GOJI AI de Goji Empires",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "start:local": "node local-server.js"
   },
   "engines": {
     "node": ">=20"
