@@ -1,6 +1,6 @@
 {
   "name": "goji-ai",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "private": true,
   "description": "GOJI AI desktop app for Windows",
   "main": "electron-main.js",
