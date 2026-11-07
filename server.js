@@ -44,6 +44,10 @@ const providers = {
   deepseek: {
     env: "DEEPSEEK_API_KEY",
     model: process.env.DEEPSEEK_MODEL || "deepseek-chat"
+  },
+  abacus: {
+    env: "ABACUS_API_KEY",
+    model: process.env.ABACUS_MODEL || "route-llm"
   }
 };
 
@@ -99,6 +103,22 @@ app.get("/api/health", (_req, res) => {
   res.json({ ok: true, service: "GOJI AI backend" });
 });
 
+app.get("/api/abacus/models", requireAccess, async (_req, res) => {
+  const apiKey = process.env.ABACUS_API_KEY;
+  if (!apiKey) return res.status(503).json({ error: { code: "missing_api_key", message: "Falta configurar ABACUS_API_KEY en Render." } });
+  try {
+    const response = await fetch("https://routellm.abacus.ai/v1/models", { headers: { "Authorization": "Bearer " + apiKey } });
+    const data = await readProviderResponse(response);
+    const models = (Array.isArray(data.data) ? data.data : Array.isArray(data.models) ? data.models : [])
+      .filter(item => item && typeof item.id === "string")
+      .map(item => ({ id: item.id, owned_by: item.owned_by || "", model_type: item.model_type || "text", api_formats: item.api_formats || [] }))
+      .slice(0, 500);
+    res.json({ models });
+  } catch (error) {
+    res.status(error.status || 502).json({ error: { code: error.code || "abacus_models_error", message: error.message || "No se pudo cargar el catálogo de Abacus.AI." } });
+  }
+});
+
 app.get("/api/providers", requireAccess, (_req, res) => {
   const result = {};
   for (const [id, p] of Object.entries(providers)) {
@@ -122,7 +142,9 @@ function validateChat(body) {
     return { role: m.role, content: m.content.trim() };
   });
   const system = typeof body.system === "string" ? body.system.slice(0, 20000) : "";
-  return { provider: body.provider, messages, system };
+  const model = typeof body.model === "string" && /^[A-Za-z0-9._:/-]{1,180}$/.test(body.model) ? body.model : "";
+  if (body.provider === "abacus" && body.model && !model) throw Object.assign(new Error("Identificador de modelo no válido."), { status: 400, code: "invalid_model" });
+  return { provider: body.provider, messages, system, model };
 }
 
 async function readProviderResponse(response) {
@@ -217,6 +239,8 @@ app.post("/api/chat", requireAccess, async (req, res) => {
       text = await callOpenAICompatible("https://api.openai.com/v1", apiKey, config.model, input.messages, input.system);
     } else if (input.provider === "deepseek") {
       text = await callOpenAICompatible("https://api.deepseek.com", apiKey, config.model, input.messages, input.system);
+    } else if (input.provider === "abacus") {
+      text = await callOpenAICompatible("https://routellm.abacus.ai/v1", apiKey, input.model || config.model, input.messages, input.system);
     } else if (input.provider === "anthropic") {
       text = await callAnthropic(apiKey, config.model, input.messages, input.system);
     } else {
