@@ -7,7 +7,7 @@ const path = require("path");
 const app = express();
 const HOST = "127.0.0.1";
 const PORT = Number(process.env.GOJI_LOCAL_PORT || 3000);
-const CONFIG_PATH = path.join(__dirname, ".goji-local.json");
+const CONFIG_PATH = process.env.GOJI_CONFIG_PATH || path.join(__dirname, ".goji-local.json");
 app.disable("x-powered-by");
 app.use(express.json({ limit: "1mb" }));
 app.use((_req, res, next) => {
