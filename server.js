@@ -237,10 +237,11 @@ app.post("/api/chat", requireAccess, async (req, res) => {
 // La app estática se sirve desde public/ si existe; el index.html del repositorio
 // puede moverse a public/index.html para que Render lo publique automáticamente.
 const publicDir = path.join(__dirname, "public");
-const frontendDir = fs.existsSync(path.join(publicDir, "index.html")) ? publicDir : __dirname;
-app.use(express.static(frontendDir));
+const hasPublicFrontend = fs.existsSync(path.join(publicDir, "index.html"));
+if (hasPublicFrontend) app.use(express.static(publicDir));
 app.get("*", (_req, res) => {
-  res.sendFile(path.join(frontendDir, "index.html"), err => {
+  const indexPath = path.join(hasPublicFrontend ? publicDir : __dirname, "index.html");
+  res.sendFile(indexPath, err => {
     if (err) res.status(404).send("GOJI AI: falta index.html en la raíz o public/.");
   });
 });
