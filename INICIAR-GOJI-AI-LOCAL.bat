@@ -17,6 +17,8 @@ if not exist "node_modules\express" (
     exit /b 1
   )
 )
-start "GOJI AI" "http://127.0.0.1:3000"
-call npm run start:local
+start "GOJI AI Server" cmd /k "cd /d ""%~dp0"" && npm run start:local"
+timeout /t 2 /nobreak >nul
+start "" "http://127.0.0.1:3000"
+echo GOJI AI esta ejecutandose localmente. No cierres la ventana del servidor.
 pause
