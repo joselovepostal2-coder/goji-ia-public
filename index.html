@@ -254,5 +254,5 @@ try{const r=await sm(h,{tools:TOOLS,cache:false,onText:({text})=>{last.content=t
 busy=false;save();render()}
 /* ---------- recordatorios ---------- */
 function due(){const n=Date.now();let ch=0;S.movies.forEach(m=>{if(m.remind&&!m.done_r&&m.status!=='Vista'&&new Date(m.remind)<=n){m.done_r=true;ch=1;const t='Hoy toca ver: '+m.title;toast('⏰ '+t,15000);try{if('Notification'in window&&Notification.permission==='granted')new Notification('GOJI AI',{body:t})}catch(e){}}});if(ch){save();if(view==='movies')render()}}
-(async()=>{const d=await load();if(d)S={...S,...d};render();save();due();setInterval(due,30000);if(!window.claude?.use)pv='openai';beLoad()})();
+(async()=>{const d=await load();if(d)S={...S,...d};render();save();due();setInterval(due,30000);if(!window.claude?.use)pv=localMode?'abacus':'openai';beLoad()})();
 </script></body></html>
