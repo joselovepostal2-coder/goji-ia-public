@@ -91,7 +91,7 @@ let S={projects:['GDA','GSA','SPIDER DOOM','MONSTER DESTRUCTION'].map(n=>({id:ui
 /* ---------- almacenamiento (IndexedDB) ---------- */
 const idb=()=>new Promise((r,j)=>{const o=indexedDB.open('goji-ai',1);o.onupgradeneeded=()=>o.result.createObjectStore('kv');o.onsuccess=()=>r(o.result);o.onerror=()=>j(o.error)});
 async function load(){try{const d=await idb();return await new Promise(r=>{const g=d.transaction('kv').objectStore('kv').get('state');g.onsuccess=()=>r(g.result);g.onerror=()=>r(null)})}catch(e){return null}}
-async function save(){try{const d=await idb();const t=d.transaction('kv','readwrite');t.objectStore('kv').put(S,'state');t.oncomplete=()=>{$('#st').textContent='● Guardado '+new Date().toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'})};t.onerror=()=>$('#st').textContent='⚠ Error al guardar'}catch(e){$('#st').textContent='⚠ Sin almacenamiento en este navegador'}}
+async function save(){try{const d=await idb();await new Promise((resolve,reject)=>{const t=d.transaction('kv','readwrite');t.objectStore('kv').put(S,'state');t.oncomplete=()=>{$('#st').textContent='● Guardado '+new Date().toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'});resolve(true)};t.onerror=()=>{const e=t.error||new Error('Error de IndexedDB');$('#st').textContent='⚠ Error al guardar';reject(e)};t.onabort=()=>reject(t.error||new Error('Guardado cancelado'))})}catch(e){$('#st').textContent='⚠ Sin almacenamiento en este navegador';return false}return true}
 const toast=(t,ms=5000)=>{const e=$('#toast');e.textContent=t;e.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display='none',ms)};
 /* ---------- formularios ---------- */
 let pendImg=null;
